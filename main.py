@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Callable, Optional, List
 
-import data.plugins.astrbot_plugin_jx3.util.image_util as image_util
+import util.image_util as image_util
 from astrbot.api import logger
 from astrbot.api.event import filter
 from astrbot.api.star import Context, Star, register
@@ -9,7 +9,7 @@ from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.message.components import BaseMessageComponent, Plain
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
-from data.plugins.astrbot_plugin_jx3.util import AsyncHttpUtil, CronSchedulerUtil
+from .util import AsyncHttpUtil, CronSchedulerUtil
 
 
 @register("jx3", "MiaoToT", "剑三 API", "1.0")
