@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Callable, Optional, List
 
-import util.image_util as image_util
+from .util import image_util
 from astrbot.api import logger
 from astrbot.api.event import filter
 from astrbot.api.star import Context, Star, register
