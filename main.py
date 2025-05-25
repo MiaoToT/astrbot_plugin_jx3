@@ -60,7 +60,7 @@ class Jx3Plugin(Star):
     @filter.event_message_type(filter.EventMessageType.ALL)
     @filter.permission_type(filter.PermissionType.MEMBER)
     async def celebs(self, event: AstrMessageEvent):
-        """获取侠行事件"""
+        """获取侠行事件|楚天社,云从社,披风会"""
         yield await self.result_handler("/data/active/celebs",
                                         lambda data: [image_util.schedule_image(data)],
                                         event, {"name": event.get_message_str().split(" ")[1]})
