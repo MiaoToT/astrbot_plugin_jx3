@@ -1,0 +1,27 @@
+{
+    "token": {
+        "description": "剑三 API Token",
+        "type": "string"
+    },
+    "ticket": {
+        "description": "剑三推栏 Ticket",
+        "type": "string"
+    },
+    "host": {
+        "description": "API 调用域名",
+        "type": "string",
+        "default": "https://www.jx3api.com",
+        "hint": "https://www.jx3api.com"
+    },
+    "server": {
+        "description": "默认查询的服务器",
+        "type": "string",
+        "default": "乾坤一掷",
+        "hint": "乾坤一掷"
+    },
+    "subscriber": {
+        "description": "定时任务主动推送 SID 列表",
+        "type": "list",
+        "hint": "aiocqhttp:GroupMessage:12345678"
+    }
+}
