@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Callable, Optional, List
+from typing import Callable, Optional, List, TypedDict
 
-from .util import image_util
 from astrbot.api import logger
 from astrbot.api.event import filter
 from astrbot.api.star import Context, Star, register
@@ -10,6 +9,13 @@ from astrbot.core.message.components import BaseMessageComponent, Plain
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from .util import AsyncHttpUtil, CronSchedulerUtil
+from .util import image_util
+
+
+class SchedulerStatus(TypedDict):
+    """用于存储部分定时任务状态"""
+    last_server_status: Optional[dict]  # 上一次服务器状态
+    last_skill_info_id: Optional[str]  # 上一次技改信息id
 
 
 @register("jx3", "MiaoToT", "剑三 API", "1.0")
@@ -23,15 +29,16 @@ class Jx3Plugin(Star):
             "ticket": config["ticket"],
             "nickname": "喵喵",
         }
-        self._scheduler_status = {  # 用于存储部分定时任务状态
-            "last_server_status_time": None,  # 上一次服务器状态时间
-            "last_skill_info_id": None,  # 上一次技改信息 id
+        self._scheduler_status: SchedulerStatus = {  # 用于存储部分定时任务状态
+            "last_server_status": None,
+            "last_skill_info_id": None,
         }
         self._host = config["host"]  # 剑三 API 调用域名
         self._subscriber = config["subscriber"]  # 定时任务需要发送的群组
         self._scheduler = CronSchedulerUtil()
-        self._scheduler.add_task(self.server_status, "20 8-12 * * *")
-        self._scheduler.add_task(self.skill_info, "0 9,13,18 * * *")
+        self._scheduler.add_task(self.server_on_status(), "*/20 8-18 * * *")  # 开服检测
+        self._scheduler.add_task(self.server_off_status(), "0 5 * * *")  # 维护检测
+        self._scheduler.add_task(self.skill_info, "0 9,13,18 * * *")  # 技改公告查询
 
     @filter.command_group("剑三")
     def jx3(self):
@@ -93,22 +100,33 @@ class Jx3Plugin(Star):
 
         await self.result_handler("/data/skills/records", data_handler)
 
-    async def server_status(self):
-        """开服情况"""
+    async def server_on_status(self):
+        """开服检测:每天8-18点20分钟一次检测直到开服"""
+        last_status = self._scheduler_status["last_server_status"]
+        # 记录检测的时间为当天或者是检测状态为开服则不再进行检测
+        if last_status is not None and last_status["status"] == 1:
+            return
 
         def data_handler(data: dict) -> List[BaseMessageComponent]:
-            api_status_time = data["time"]
-            if self._scheduler_status["last_server_status_time"] is None:
-                self._scheduler_status["last_server_status_time"] = api_status_time
+            self._scheduler_status["last_server_status"] = {
+                "time": data["time"],  # api返回时间
+                "status": data["status"],  # api返回状态
+            }
+            time = datetime.fromtimestamp(data["time"]).strftime("%H:%M")
+            server_name = self._api_params["server"]
+            return [Plain(f"{server_name} 在{time}开服啦 ε(*′･∀･｀)зﾞ")]
 
-            if api_status_time == self._scheduler_status["last_server_status_time"]:
-                return []
-            else:
-                self._scheduler_status["last_server_status_time"] = api_status_time
-                time = datetime.fromtimestamp(data["time"]).strftime("%H:%M")
-                server_name = self._api_params["server"]
-                return [Plain(f"{server_name} 在{time}开服啦 ε(*′･∀･｀)зﾞ"
-                              if data["status"] == 1 else f"{server_name} 在{time}维护了 (ꈍ﹃ ꈍ)")]
+        await self.result_handler("/data/server/check", data_handler)
+
+    async def server_off_status(self):
+        """维护检测:每天早上5点检测一次"""
+
+        def data_handler(data: dict) -> List[BaseMessageComponent]:
+            self._scheduler_status["last_server_status"] = {
+                "time": data["time"],  # api返回时间
+                "status": data["status"],  # api返回状态
+            }
+            return []
 
         await self.result_handler("/data/server/check", data_handler)
 
