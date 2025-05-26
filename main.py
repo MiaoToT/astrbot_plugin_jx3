@@ -36,9 +36,9 @@ class Jx3Plugin(Star):
         self._host = config["host"]  # 剑三 API 调用域名
         self._subscriber = config["subscriber"]  # 定时任务需要发送的群组
         self._scheduler = CronSchedulerUtil()
-        self._scheduler.add_task(self.server_on_status(), "*/20 8-18 * * *")  # 开服检测
-        self._scheduler.add_task(self.server_off_status(), "0 5 * * *")  # 维护检测
-        self._scheduler.add_task(self.skill_info, "0 9,13,18 * * *")  # 技改公告查询
+        self._scheduler.add_task(self.server_on_status, "*/20 8-18 * * *")  # 开服检测
+        self._scheduler.add_task(self.server_off_status, "0 5 * * *")  # 维护检测
+        self._scheduler.add_task(self.skill_info, "0 12 * * *")  # 技改公告查询
 
     @filter.command_group("剑三")
     def jx3(self):
@@ -87,32 +87,35 @@ class Jx3Plugin(Star):
 
         def data_handler(data: dict) -> List[BaseMessageComponent]:
             api_skill_id = data[0]["id"]
-            if self._scheduler_status["last_skill_info_id"] is None:
-                self._scheduler_status["last_skill_info_id"] = api_skill_id
-
-            if api_skill_id == self._scheduler_status["last_skill_info_id"]:
+            is_init = self._scheduler_status["last_skill_info_id"] is None  # 是否第一次初始化
+            self._scheduler_status["last_skill_info_id"] = api_skill_id
+            # 第一次初始化不发送消息
+            if is_init:
                 return []
-            else:
-                self._scheduler_status["last_skill_info_id"] = api_skill_id
-                skill_title = data[0]["title"]
-                skill_url = data[0]["url"]
-                return [Plain(f"{skill_title}:\n{skill_url}")]
+            skill_title = data[0]["title"]
+            skill_url = data[0]["url"]
+            return [Plain(f"{skill_title}:\n{skill_url}")]
 
         await self.result_handler("/data/skills/records", data_handler)
 
     async def server_on_status(self):
         """开服检测:每天8-18点20分钟一次检测直到开服"""
         last_status = self._scheduler_status["last_server_status"]
-        # 记录检测的时间为当天或者是检测状态为开服则不再进行检测
+        # 检测状态为开服则不再进行检测
         if last_status is not None and last_status["status"] == 1:
             return
 
         def data_handler(data: dict) -> List[BaseMessageComponent]:
+            api_time = data["time"]  # api 服务器状态变更时间
+            is_init = self._scheduler_status["last_server_status"] is None  # 是否第一次初始化
             self._scheduler_status["last_server_status"] = {
-                "time": data["time"],  # api返回时间
-                "status": data["status"],  # api返回状态
+                "time": api_time,
+                "status": data["status"],  # api 服务器状态
             }
-            time = datetime.fromtimestamp(data["time"]).strftime("%H:%M")
+            # 第一次初始化不发送消息
+            if is_init:
+                return []
+            time = datetime.fromtimestamp(api_time).strftime("%H:%M")
             server_name = self._api_params["server"]
             return [Plain(f"{server_name} 在{time}开服啦 ε(*′･∀･｀)зﾞ")]
 
