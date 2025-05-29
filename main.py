@@ -87,6 +87,8 @@ class Jx3Plugin(Star):
 
         def data_handler(data: dict) -> List[BaseMessageComponent]:
             api_skill_id = data[0]["id"]
+            if self._scheduler_status["last_skill_info_id"] == api_skill_id:
+                return []
             is_init = self._scheduler_status["last_skill_info_id"] is None  # 是否第一次初始化
             self._scheduler_status["last_skill_info_id"] = api_skill_id
             # 第一次初始化不发送消息
