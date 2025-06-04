@@ -46,6 +46,7 @@ class Jx3Plugin(Star):
         pass
 
     @jx3.command("日常")
+    @filter.llm_tool(name="jx3_daily")
     @filter.event_message_type(filter.EventMessageType.ALL)
     @filter.permission_type(filter.PermissionType.MEMBER)
     async def daily(self, event: AstrMessageEvent):
@@ -55,6 +56,7 @@ class Jx3Plugin(Star):
                                         event, {"num": 0})
 
     @jx3.command("日历")
+    @filter.llm_tool(name="jx3_calendar")
     @filter.event_message_type(filter.EventMessageType.ALL)
     @filter.permission_type(filter.PermissionType.MEMBER)
     async def calendar(self, event: AstrMessageEvent):
@@ -64,6 +66,7 @@ class Jx3Plugin(Star):
                                         event, {"num": 7})
 
     @jx3.command("楚天社", alias={"云从社", "披风会"})
+    @filter.llm_tool(name="jx3_celebs")
     @filter.event_message_type(filter.EventMessageType.ALL)
     @filter.permission_type(filter.PermissionType.MEMBER)
     async def celebs(self, event: AstrMessageEvent):
@@ -73,6 +76,7 @@ class Jx3Plugin(Star):
                                         event, {"name": event.get_message_str().split(" ")[1]})
 
     @jx3.command("令牌")
+    @filter.llm_tool(name="jx3_renew_ticket")
     @filter.event_message_type(filter.EventMessageType.ALL)
     @filter.permission_type(filter.PermissionType.ADMIN)
     async def renew_ticket(self, event: AstrMessageEvent, ticket: str):
