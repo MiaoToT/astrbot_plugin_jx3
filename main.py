@@ -36,8 +36,8 @@ class Jx3Plugin(Star):
         self._host = config["host"]  # 剑三 API 调用域名
         self._subscriber = config["subscriber"]  # 定时任务需要发送的群组
         self._scheduler = CronSchedulerUtil()
-        self._scheduler.add_task(self.server_on_status, "*/20 8-18 * * *")  # 开服检测
-        self._scheduler.add_task(self.server_off_status, "0 5 * * *")  # 维护检测
+        # self._scheduler.add_task(self.server_on_status, "*/20 8-18 * * *")  # 开服检测
+        # self._scheduler.add_task(self.server_off_status, "0 5 * * *")  # 维护检测
         self._scheduler.add_task(self.skill_info, "0 12 * * *")  # 技改公告查询
 
     @filter.command_group("剑三")
